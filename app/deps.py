@@ -1,13 +1,31 @@
-"""
-FastAPI dependencies shared across routers.
+from collections.abc import AsyncGenerator
 
-get_current_user(authorization: str = Header(...)) -> str
-    Verifies the Bearer JWT from the Authorization header using the Supabase JWT
-    secret (HS256, audience="authenticated"). Returns the `sub` claim, which is
-    the auth.users UUID used as user_id in all database queries.
-    Raises HTTP 401 on missing, malformed, or expired tokens.
+import asyncpg
+import jwt
+from fastapi import Depends, Header, HTTPException, Request
 
-get_db() -> asyncpg.Connection
-    Yields a connection from the shared asyncpg pool (acquired from app state).
-    Releases the connection back to the pool after the request completes.
-"""
+from app.config import Settings, get_settings
+
+
+async def get_current_user(
+    authorization: str = Header(...),
+    settings: Settings = Depends(get_settings),
+) -> str:
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(status_code=401, detail="Invalid authorization header")
+    token = authorization.removeprefix("Bearer ")
+    try:
+        payload = jwt.decode(
+            token,
+            settings.SUPABASE_JWT_SECRET,
+            algorithms=["HS256"],
+            audience="authenticated",
+        )
+        return payload["sub"]
+    except jwt.PyJWTError:
+        raise HTTPException(status_code=401, detail="Invalid or expired token")
+
+
+async def get_db(request: Request) -> AsyncGenerator[asyncpg.Connection, None]:
+    async with request.app.state.pool.acquire() as connection:
+        yield connection

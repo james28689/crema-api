@@ -1,12 +1,17 @@
-"""
-Application settings loaded from environment variables via pydantic-settings.
+from functools import lru_cache
+from typing import Literal
 
-Fields:
-- SUPABASE_URL: Base URL of the Supabase project
-- SUPABASE_JWT_SECRET: Secret used to verify HS256 JWTs issued by Supabase Auth
-- DATABASE_URL: asyncpg-compatible PostgreSQL DSN
-  (e.g. postgresql://user:pass@host:5432/dbname)
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
-A single `get_settings()` cached function is provided for use as a FastAPI
-dependency, ensuring the environment is only parsed once.
-"""
+
+class Settings(BaseSettings):
+    SUPABASE_JWT_SECRET: str
+    DATABASE_URL: str
+    ENV: Literal["dev", "prod"] = "dev"
+
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+
+
+@lru_cache
+def get_settings() -> Settings:
+    return Settings()  # type: ignore[call-arg]
