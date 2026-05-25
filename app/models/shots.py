@@ -35,3 +35,8 @@ class ShotResponse(BaseModel):
     notes: str | None
     pulled_at: datetime
     days_off_roast_at_pull: int | None
+
+
+class ShotListResponse(BaseModel):
+    data: list[ShotResponse]
+    next_cursor: UUID | None
