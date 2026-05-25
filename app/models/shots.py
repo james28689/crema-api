@@ -1,18 +1,37 @@
-"""
-Pydantic models for the /v1/shots endpoints.
+from datetime import datetime
+from uuid import UUID
 
-ShotCreate    — request body for POST /v1/shots.
-                Required: bean_id (UUID), dose_g (positive), yield_g (positive),
-                time_sec (positive int).
-                Optional: grinder_setting, rating (1–10), taste_tags (list[str]),
-                notes, pulled_at (datetime, defaults to now()).
+from pydantic import BaseModel, Field
 
-BeanSummary   — nested bean name included in ShotResponse (null-safe for deleted beans).
 
-ShotResponse  — response shape for all shot endpoints.
-                Includes computed read-only fields: ratio (float), days_off_roast_at_pull
-                (int | None), bean (BeanSummary | None), pulled_at, created_at.
+class ShotCreate(BaseModel):
+    bean_id: UUID
+    dose_g: float = Field(gt=0)
+    yield_g: float = Field(gt=0)
+    time_sec: int = Field(gt=0)
+    grinder_setting: str | None = None
+    rating: int | None = Field(default=None, ge=1, le=10)
+    taste_tags: list[str] | None = None
+    notes: str | None = None
+    pulled_at: datetime | None = None
 
-ShotListResponse — wraps a list of ShotResponse with next_cursor (UUID | None) for
-                   cursor-based pagination.
-"""
+
+class BeanName(BaseModel):
+    id: UUID
+    name: str
+
+
+class ShotResponse(BaseModel):
+    id: UUID
+    bean_id: UUID | None
+    bean: BeanName | None
+    dose_g: float
+    yield_g: float
+    ratio: float
+    time_sec: int
+    grinder_setting: str | None
+    rating: int | None
+    taste_tags: list[str] | None
+    notes: str | None
+    pulled_at: datetime
+    days_off_roast_at_pull: int | None

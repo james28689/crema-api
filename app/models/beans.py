@@ -1,16 +1,41 @@
-"""
-Pydantic models for the /v1/beans endpoints.
+from datetime import date, datetime
+from typing import Literal
+from uuid import UUID
 
-BeanCreate   — request body for POST /v1/beans.
-               Required: name (non-empty str).
-               Optional: roaster, origin, process (washed|natural|honey),
-               roast_level (light|medium|dark), roast_date (date).
+from pydantic import BaseModel, Field
 
-BeanUpdate   — request body for PATCH /v1/beans/{id}.
-               All fields optional (partial update). Same field constraints as
-               BeanCreate where applicable, plus is_active (bool).
+BeanProcess = Literal["washed", "natural", "honey"]
+BeanRoastLevel = Literal["light", "medium", "dark"]
 
-BeanResponse — response shape for all bean endpoints.
-               Includes computed read-only fields: days_off_roast (int | None),
-               shot_count (int), created_at (datetime).
-"""
+
+class BeanCreate(BaseModel):
+    name: str = Field(min_length=1)
+    roaster: str | None = None
+    origin: str | None = None
+    process: BeanProcess | None = None
+    roast_level: BeanRoastLevel | None = None
+    roast_date: date | None = None
+
+
+class BeanUpdate(BaseModel):
+    name: str | None = Field(default=None, min_length=1)
+    roaster: str | None = None
+    origin: str | None = None
+    process: BeanProcess | None = None
+    roast_level: BeanRoastLevel | None = None
+    roast_date: date | None = None
+    is_active: bool | None = None
+
+
+class BeanResponse(BaseModel):
+    id: UUID
+    name: str
+    roaster: str | None
+    origin: str | None
+    process: BeanProcess | None
+    roast_level: BeanRoastLevel | None
+    roast_date: date | None
+    days_off_roast: int | None
+    is_active: bool
+    shot_count: int
+    created_at: datetime
