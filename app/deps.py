@@ -8,10 +8,10 @@ from app.config import Settings, get_settings
 
 
 async def get_current_user(
-    authorization: str = Header(...),
+    authorization: str | None = Header(default=None),
     settings: Settings = Depends(get_settings),
 ) -> str:
-    if not authorization.startswith("Bearer "):
+    if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
     token = authorization.removeprefix("Bearer ")
     try:

@@ -88,7 +88,7 @@ async def create_shot(
         user_id,
     )
     if bean_exists is None:
-        raise HTTPException(status_code=422, detail="bean_id not found or not owned by user")
+        raise HTTPException(status_code=403, detail="bean_id not found or not owned by user")
 
     row = await conn.fetchrow(
         f"""
