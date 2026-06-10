@@ -1,3 +1,4 @@
+import logging
 from collections.abc import AsyncGenerator
 from functools import lru_cache
 
@@ -7,6 +8,8 @@ from jwt import PyJWKClient
 from fastapi import Header, HTTPException, Request
 
 from app.config import get_settings
+
+logger = logging.getLogger("crema.auth")
 
 
 @lru_cache
@@ -30,7 +33,8 @@ async def get_current_user(
             audience="authenticated",
         )
         return payload["sub"]
-    except jwt.PyJWTError:
+    except jwt.PyJWTError as exc:
+        logger.warning("JWT rejected: %s", exc)
         raise HTTPException(status_code=401, detail="Invalid or expired token")
 
 

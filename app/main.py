@@ -1,3 +1,4 @@
+import logging
 import time
 from collections import defaultdict, deque
 from contextlib import asynccontextmanager
@@ -11,6 +12,12 @@ from app.config import get_settings
 from app.db.client import close_pool, create_pool
 from app.deps import _get_jwks_client
 from app.routers import beans, shots
+
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s %(levelname)-8s %(name)s: %(message)s",
+)
+logger = logging.getLogger("crema")
 
 _RATE_LIMIT = 100
 _WINDOW_SEC = 60
@@ -81,11 +88,14 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
 
 @app.exception_handler(HTTPException)
 async def http_exception_handler(request: Request, exc: HTTPException) -> JSONResponse:
+    if exc.status_code >= 500:
+        logger.error("%s %s → %d: %s", request.method, request.url.path, exc.status_code, exc.detail)
     return _error(str(exc.detail), exc.status_code)
 
 
 @app.exception_handler(Exception)
 async def generic_exception_handler(request: Request, exc: Exception) -> JSONResponse:
+    logger.exception("Unhandled error on %s %s", request.method, request.url.path)
     return _error("An unexpected error occurred", 500)
 
 
