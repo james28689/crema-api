@@ -1,7 +1,7 @@
 import os
 
 # Must be set before any app import triggers get_settings().
-os.environ.setdefault("SUPABASE_JWT_SECRET", "test-secret")
+os.environ.setdefault("SUPABASE_JWKS_URL", "https://example.supabase.co/.well-known/jwks.json")
 os.environ.setdefault("DATABASE_URL", "postgresql://localhost/test")
 
 from unittest.mock import AsyncMock, MagicMock, patch

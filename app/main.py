@@ -9,6 +9,7 @@ from fastapi.responses import JSONResponse
 
 from app.config import get_settings
 from app.db.client import close_pool, create_pool
+from app.deps import _get_jwks_client
 from app.routers import beans, shots
 
 _RATE_LIMIT = 100
@@ -47,10 +48,11 @@ async def rate_limit_middleware(request: Request, call_next):
 
     token = authorization.removeprefix("Bearer ")
     try:
+        signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
-            get_settings().SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=["RS256"],
             audience="authenticated",
         )
         user_id: str = payload["sub"]

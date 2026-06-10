@@ -1,24 +1,32 @@
 from collections.abc import AsyncGenerator
+from functools import lru_cache
 
 import asyncpg
 import jwt
-from fastapi import Depends, Header, HTTPException, Request
+from jwt import PyJWKClient
+from fastapi import Header, HTTPException, Request
 
-from app.config import Settings, get_settings
+from app.config import get_settings
+
+
+@lru_cache
+def _get_jwks_client() -> PyJWKClient:
+    return PyJWKClient(get_settings().SUPABASE_JWKS_URL)
 
 
 async def get_current_user(
+    request: Request,
     authorization: str | None = Header(default=None),
-    settings: Settings = Depends(get_settings),
 ) -> str:
     if not authorization or not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Invalid authorization header")
     token = authorization.removeprefix("Bearer ")
     try:
+        signing_key = _get_jwks_client().get_signing_key_from_jwt(token)
         payload = jwt.decode(
             token,
-            settings.SUPABASE_JWT_SECRET,
-            algorithms=["HS256"],
+            signing_key.key,
+            algorithms=["RS256"],
             audience="authenticated",
         )
         return payload["sub"]
