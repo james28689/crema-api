@@ -52,7 +52,7 @@ async def rate_limit_middleware(request: Request, call_next):
         payload = jwt.decode(
             token,
             signing_key.key,
-            algorithms=["RS256"],
+            algorithms=["RS256", "ES256"],
             audience="authenticated",
         )
         user_id: str = payload["sub"]
