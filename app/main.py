@@ -36,7 +36,7 @@ def _error(message: str, status: int) -> JSONResponse:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     settings = get_settings()
-    app.state.pool = await create_pool(settings.DATABASE_URL)
+    app.state.pool = await create_pool(settings.DATABASE_URL, max_size=settings.DB_POOL_MAX_SIZE)
     yield
     await close_pool(app.state.pool)
 

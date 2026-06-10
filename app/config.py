@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     SUPABASE_JWKS_URL: str
     DATABASE_URL: str
     ENV: Literal["dev", "prod"] = "dev"
+    DB_POOL_MAX_SIZE: int = 10
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
