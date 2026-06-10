@@ -90,19 +90,13 @@ async def create_shot(
     if bean_exists is None:
         raise HTTPException(status_code=403, detail="bean_id not found or not owned by user")
 
-    row = await conn.fetchrow(
-        f"""
-        WITH inserted AS (
-            INSERT INTO shots
-                (user_id, bean_id, dose_g, yield_g, time_sec, grinder_setting,
-                 rating, taste_tags, notes, pulled_at)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, now()))
-            RETURNING id
-        )
-        SELECT {_SHOT_COLS}
-        FROM shots s
-        LEFT JOIN beans b ON b.id = s.bean_id
-        WHERE s.id = (SELECT id FROM inserted)
+    shot_id = await conn.fetchval(
+        """
+        INSERT INTO shots
+            (user_id, bean_id, dose_g, yield_g, time_sec, grinder_setting,
+             rating, taste_tags, notes, pulled_at)
+        VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, COALESCE($10, now()))
+        RETURNING id
         """,
         user_id,
         body.bean_id,
@@ -114,6 +108,15 @@ async def create_shot(
         body.taste_tags,
         body.notes,
         body.pulled_at,
+    )
+    row = await conn.fetchrow(
+        f"""
+        SELECT {_SHOT_COLS}
+        FROM shots s
+        LEFT JOIN beans b ON b.id = s.bean_id
+        WHERE s.id = $1
+        """,
+        shot_id,
     )
     return _to_shot(row)  # ty: ignore[invalid-argument-type]
 

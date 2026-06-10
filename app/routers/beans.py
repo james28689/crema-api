@@ -73,16 +73,11 @@ async def create_bean(
     user_id: str = Depends(get_current_user),
     conn: asyncpg.Connection = Depends(get_db),
 ) -> BeanResponse:
-    row = await conn.fetchrow(
-        f"""
-        WITH inserted AS (
-            INSERT INTO beans (user_id, name, roaster, origin, process, roast_level, roast_date)
-            VALUES ($1, $2, $3, $4, $5, $6, $7)
-            RETURNING id
-        )
-        SELECT {_BEAN_COLS}
-        FROM beans b
-        WHERE b.id = (SELECT id FROM inserted)
+    bean_id = await conn.fetchval(
+        """
+        INSERT INTO beans (user_id, name, roaster, origin, process, roast_level, roast_date)
+        VALUES ($1, $2, $3, $4, $5, $6, $7)
+        RETURNING id
         """,
         user_id,
         body.name,
@@ -92,7 +87,8 @@ async def create_bean(
         body.roast_level,
         body.roast_date,
     )
-    return _to_bean(row)
+    row = await _fetch_bean(conn, bean_id, user_id)
+    return _to_bean(row)  # ty: ignore[invalid-argument-type]
 
 
 @router.get("/{bean_id}", response_model=BeanResponse)
