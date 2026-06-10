@@ -10,7 +10,7 @@ class ShotCreate(BaseModel):
     yield_g: float = Field(gt=0)
     time_sec: int = Field(gt=0)
     grinder_setting: str | None = None
-    rating: int | None = Field(default=None, ge=1, le=10)
+    rating: int = Field(ge=1, le=10)
     taste_tags: list[str] | None = None
     notes: str | None = None
     pulled_at: datetime | None = None
@@ -30,7 +30,7 @@ class ShotResponse(BaseModel):
     ratio: float
     time_sec: int
     grinder_setting: str | None
-    rating: int | None
+    rating: int
     taste_tags: list[str] | None
     notes: str | None
     pulled_at: datetime
